@@ -1,0 +1,66 @@
+<!-- templates/orders.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>订单管理</h2>
+<form method="POST" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label class="form-label">下单日期</label>
+        <input type="date" class="form-control" name="order_date" value="{{ today }}">
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">货品编号</label>
+        <input type="text" class="form-control" name="product_id" required>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">货品名称</label>
+        <input type="text" class="form-control" name="product_name" required>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">订单数量</label>
+        <input type="number" class="form-control" name="quantity" min="1" required>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">添加订单</button>
+    </div>
+</form>
+
+<h3>订单列表</h3>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>下单日期</th>
+            <th>货品编号</th>
+            <th>货品名称</th>
+            <th>数量</th>
+            <th>状态</th>
+			<th>还差多少完成</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.order_date }}</td>
+            <td>{{ order.product_id }}</td>
+            <td>{{ order.product_name }}</td>
+            <td>{{ order.quantity }}</td>
+            <td>
+                {% if order.is_completed %}
+                    <span class="badge bg-success">已完成</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">未完成</span>
+                {% endif %}
+            </td>
+			<td>
+				{% if not order.is_completed %}
+					{{ shortfall_map.get(order.product_id, 0) }}
+				{% else %}
+					—
+				{% endif %}
+			</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

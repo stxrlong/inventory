@@ -1,0 +1,38 @@
+<!-- templates/products.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>产品管理</h2>
+<form method="POST" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label class="form-label">货品名称</label>
+        <input type="text" class="form-control" name="product_name" required>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">货品编号</label>
+        <input type="text" class="form-control" name="product_id" required>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">添加产品</button>
+    </div>
+</form>
+
+<h3>产品列表</h3>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>货品名称</th>
+            <th>货品编号</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.id }}</td>
+            <td>{{ product.product_name }}</td>
+            <td>{{ product.product_id }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

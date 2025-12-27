@@ -1,0 +1,39 @@
+<!-- templates/summary.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>实时出货汇总</h2>
+<p class="text-muted">数据实时计算，无需手动刷新</p>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>货品编号</th>
+            <th>货品名称</th>
+            <th>订单总量</th>
+            <th>已出货量</th>
+            <th>未出货量</th>
+            <th>{{ monthly_column_title }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in summary %}
+        <tr>
+            <td>{{ row.product_id }}</td>
+            <td>{{ row.product_name }}</td>
+            <td>{{ row.total_order }}</td>
+            <td>{{ row.total_shipped }}</td>
+            <td>
+                <span class="{{ 'text-success' if row.pending <= 0 else 'text-danger' }}">
+                    {{ row.pending if row.pending > 0 else 0 }}
+                </span>
+            </td>
+            <td>{{ row.monthly_shipped }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not summary %}
+<div class="alert alert-info">暂无数据，请先添加订单和出货记录。</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,79 @@
+<!-- templates/shipments.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>出货记录</h2>
+
+<!-- 获取所有货品（用于 datalist） -->
+{% set all_products = all_products %}
+
+<form method="POST" class="row g-3 mb-4" id="shipmentForm">
+    <div class="col-md-3">
+        <label class="form-label">出货日期</label>
+        <input type="date" class="form-control" name="shipment_date" value="{{ today }}" required>
+    </div>
+    
+    <!-- 统一搜索框 -->
+    <div class="col-md-5">
+        <label class="form-label">选择货品（编号或名称）</label>
+        <input type="text" class="form-control" id="product_search" list="product_list" placeholder="输入编号或名称搜索" required>
+        <datalist id="product_list">
+            {% for p in all_products %}
+            <option value="[{{ p.product_id }}] {{ p.product_name }}">
+            </option>
+            {% endfor %}
+        </datalist>
+    </div>
+    
+    <!-- 隐藏的真实字段 -->
+    <input type="hidden" name="product_id" id="real_product_id">
+    <input type="hidden" name="product_name" id="real_product_name">
+    
+    <div class="col-md-2">
+        <label class="form-label">出货数量</label>
+        <input type="number" class="form-control" name="shipped_quantity" min="1" required>
+    </div>
+    
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-success">记录出货</button>
+    </div>
+</form>
+
+<!-- 货品列表（略） -->
+<h3>出货流水</h3>
+<!-- ... -->
+
+<!-- JavaScript 实现联动 -->
+<script>
+document.getElementById('product_id_input').addEventListener('input', function(e) {
+    const inputVal = e.target.value.trim();
+    const datalist = document.getElementById('product_ids');
+    const options = datalist.querySelectorAll('option');
+    let matchedName = '';
+
+    // 查找完全匹配的 option
+    for (let opt of options) {
+        if (opt.value === inputVal || opt.textContent.includes(inputVal)) {
+            matchedName = opt.dataset.name || opt.textContent.split(' - ')[1] || '';
+            break;
+        }
+    }
+
+    document.getElementById('product_name_display').value = matchedName;
+});
+</script>
+
+<script>
+	document.getElementById('product_search').addEventListener('input', function(e) {
+		const val = e.target.value;
+		const matches = val.match(/^\[([^\]]+)\]\s+(.+)$/);
+		if (matches) {
+			document.getElementById('real_product_id').value = matches[1];
+			document.getElementById('real_product_name').value = matches[2];
+		} else {
+			document.getElementById('real_product_id').value = '';
+			document.getElementById('real_product_name').value = '';
+		}
+	});
+</script>
+
+{% endblock %}
