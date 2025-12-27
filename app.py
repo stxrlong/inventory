@@ -84,6 +84,9 @@ def products():
 @app.route('/orders', methods=['GET', 'POST'])
 def orders():
     conn = get_db_connection()
+
+	# 获取所有货品（用于前端搜索）
+    all_products = conn.execute('SELECT product_id, product_name FROM products ORDER BY product_id').fetchall()
     
     # === 处理新增订单 ===
     if request.method == 'POST':
@@ -133,7 +136,8 @@ def orders():
         'orders.html',
         orders=orders_list,
         today=date.today().isoformat(),
-        shortfall_map=shortfall_data  # 传递缺口映射
+        shortfall_map=shortfall_data,  # 传递缺口映射
+        all_products=all_products  # 传给模板
     )
 
 @app.route('/shipments', methods=['GET', 'POST'])

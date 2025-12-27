@@ -40,26 +40,47 @@
 
 <!-- 货品列表（略） -->
 <h3>出货流水</h3>
-<!-- ... -->
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>出货日期</th>
+            <th>货品编号</th>
+            <th>货品名称</th>
+            <th>出货量</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for shipment in shipments %}
+        <tr>
+            <td>{{ shipment.id }}</td>
+            <td>{{ shipment.shipment_date }}</td>
+            <td>{{ shipment.product_id }}</td>
+            <td>{{ shipment.product_name }}</td>
+            <td>{{ shipment.shipped_quantity }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 <!-- JavaScript 实现联动 -->
 <script>
-document.getElementById('product_id_input').addEventListener('input', function(e) {
-    const inputVal = e.target.value.trim();
-    const datalist = document.getElementById('product_ids');
-    const options = datalist.querySelectorAll('option');
-    let matchedName = '';
-
-    // 查找完全匹配的 option
-    for (let opt of options) {
-        if (opt.value === inputVal || opt.textContent.includes(inputVal)) {
-            matchedName = opt.dataset.name || opt.textContent.split(' - ')[1] || '';
-            break;
-        }
-    }
-
-    document.getElementById('product_name_display').value = matchedName;
-});
+	document.getElementById('product_id_input').addEventListener('input', function(e) {
+		const inputVal = e.target.value.trim();
+		const datalist = document.getElementById('product_ids');
+		const options = datalist.querySelectorAll('option');
+		let matchedName = '';
+	
+		// 查找完全匹配的 option
+		for (let opt of options) {
+			if (opt.value === inputVal || opt.textContent.includes(inputVal)) {
+				matchedName = opt.dataset.name || opt.textContent.split(' - ')[1] || '';
+				break;
+			}
+		}
+	
+		document.getElementById('product_name_display').value = matchedName;
+	});
 </script>
 
 <script>
