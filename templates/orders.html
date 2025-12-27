@@ -67,7 +67,7 @@
             </td>
 			<td>
 				{% if not order.is_completed %}
-					{{ shortfall_map.get(order.product_id, 0) }}
+					{{ order.remaining }}
 				{% else %}
 					—
 				{% endif %}

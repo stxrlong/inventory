@@ -28,7 +28,9 @@ def init_db():
             product_id TEXT NOT NULL,
             product_name TEXT NOT NULL,
             quantity INTEGER NOT NULL,
-            is_completed BOOLEAN DEFAULT 0
+            shipped_so_far INTEGER NOT NULL DEFAULT 0,
+            is_completed BOOLEAN DEFAULT 0,
+            remaining INTEGER NOT NULL DEFAULT 0
         )
     ''')
     cursor.execute('''
@@ -102,9 +104,8 @@ def orders():
             flash('请填写完整信息，数量必须大于0', 'error')
         else:
             conn.execute('''
-                INSERT INTO order_details (order_date, product_id, product_name, quantity)
-                VALUES (?, ?, ?, ?)
-            ''', (order_date, product_id, product_name, quantity))
+                INSERT INTO order_details (order_date, product_id, product_name, quantity, shipped_so_far, is_completed, remaining) VALUES (?, ?, ?, ?, 0, 0, ?)
+            ''', (order_date, product_id, product_name, quantity, quantity))
             conn.commit()
             flash('订单添加成功！', 'success')
         return redirect(url_for('orders'))
@@ -112,31 +113,12 @@ def orders():
     # === 查询所有订单 ===
     orders_list = conn.execute('SELECT * FROM order_details ORDER BY order_date DESC').fetchall()
     
-    # === 查询每个货品的缺口量（总订单 - 总出货）===
-    shortfall_data = {}
-    shortfall_rows = conn.execute('''
-        SELECT
-            od.product_id,
-            (SUM(od.quantity) - COALESCE(s.total_shipped, 0)) AS shortfall
-        FROM order_details od
-        LEFT JOIN (
-            SELECT product_id, SUM(shipped_quantity) AS total_shipped
-            FROM daily_shipments
-            GROUP BY product_id
-        ) s ON od.product_id = s.product_id
-        GROUP BY od.product_id
-    ''').fetchall()
-    
-    for row in shortfall_rows:
-        shortfall_data[row['product_id']] = max(0, row['shortfall'])  # 不显示负数
-    
     conn.close()
     
     return render_template(
         'orders.html',
         orders=orders_list,
         today=date.today().isoformat(),
-        shortfall_map=shortfall_data,  # 传递缺口映射
         all_products=all_products  # 传给模板
     )
 
@@ -165,20 +147,43 @@ def shipments():
                 VALUES (?, ?, ?, ?)
             ''', (shipment_date, product_id, product_name, shipped_quantity))
             
-            # 计算该货品的总订单量和总出货量
-            total_order = conn.execute('''
-                SELECT SUM(quantity) FROM order_details WHERE product_id = ?
-            ''', (product_id,)).fetchone()[0] or 0
-            
-            total_ship = conn.execute('''
-                SELECT SUM(shipped_quantity) FROM daily_shipments WHERE product_id = ?
-            ''', (product_id,)).fetchone()[0] or 0
-            
-            # 如果出货 ≥ 订单，则标记该货品所有订单为完成
-            if total_order > 0 and total_ship >= total_order:
+            # 2. 获取该货品所有未完成订单（按时间顺序）
+            pending_orders = conn.execute('''
+                SELECT id, quantity, shipped_so_far
+                FROM order_details
+                WHERE product_id = ? AND is_completed = 0
+                ORDER BY order_date ASC, id ASC
+            ''', (product_id,)).fetchall()
+
+            remaining_to_allocate = shipped_quantity
+
+            # 3. 按 FIFO 分配出货量
+            for order in pending_orders:
+                if remaining_to_allocate <= 0:
+                    break
+
+                order_id = order['id']
+                order_qty = order['quantity']
+                already_shipped = order['shipped_so_far']
+                still_needed = order_qty - already_shipped
+
+                if still_needed <= 0:
+                    continue
+
+				# 本次能分配给该订单的数量
+                allocate = min(remaining_to_allocate, still_needed)
+                new_shipped = already_shipped + allocate
+                new_remaining = order_qty - new_shipped
+                completed = 1 if new_remaining == 0 else 0
+
+                # 更新该订单
                 conn.execute('''
-                    UPDATE order_details SET is_completed = 1 WHERE product_id = ?
-                ''', (product_id,))
+                    UPDATE order_details
+                    SET shipped_so_far = ?, remaining = ?, is_completed = ?
+                    WHERE id = ?
+                ''', (new_shipped, new_remaining, completed, order_id))
+
+                remaining_to_allocate -= allocate
             
             conn.commit()
             flash('出货记录已添加，并自动更新订单状态！', 'success')

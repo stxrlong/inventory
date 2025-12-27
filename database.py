@@ -24,7 +24,9 @@ def init_db():
             product_id TEXT NOT NULL,
             product_name TEXT NOT NULL,
             quantity INTEGER NOT NULL,
-            is_completed BOOLEAN DEFAULT 0
+            shipped_so_far INTEGER NOT NULL DEFAULT 0,
+            is_completed BOOLEAN DEFAULT 0,
+            remaining INTEGER NOT NULL DEFAULT 0
         )
     ''')
     
