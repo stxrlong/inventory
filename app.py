@@ -1,6 +1,8 @@
 # app.py
 import os
 import sys
+import webbrowser
+import threading
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 from datetime import date
@@ -263,6 +265,12 @@ def summary():
         monthly_column_title=current_month_str  # ← 传入动态列名
     )
 
-# ======================
+# ================ 自动打开浏览器 ================
+def open_browser():
+    webbrowser.open("http://127.0.0.1:5000")
+
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    # 自动打开浏览器（仅在非调试模式）
+    if not app.debug:
+        threading.Timer(1.5, open_browser).start()
+    app.run(debug=False, host='127.0.0.1', port=5000)
