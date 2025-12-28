@@ -1,15 +1,37 @@
 # app.py
+import os
+import sys
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 from datetime import date
 
-app = Flask(__name__)
+# =============== 路径兼容函数 ===============
+def resource_path(relative_path):
+    """ 获取资源绝对路径，兼容 PyInstaller 打包 """
+    try:
+        # PyInstaller 创建临时文件夹 _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+# =============== Flask App 配置 ===============
+app = Flask(__name__,
+    template_folder=resource_path('templates'),
+    # static_folder=resource_path('static')  # 如果没有 static，可注释掉
+)
 app.secret_key = 'inventory_secret_key_2025'
 
-# ======================
-# 数据库初始化（内联，避免导入问题）
-# ======================
-DB_PATH = 'inventory.db'
+# =============== 数据库路径 ===============
+# 打包后：exe 同目录；开发：项目根目录
+if getattr(sys, 'frozen', False):
+    # 打包后
+    app_dir = os.path.dirname(sys.executable)
+else:
+    # 开发环境
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(app_dir, 'inventory.db')
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
