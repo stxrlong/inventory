@@ -42,3 +42,10 @@ jobs:
         name: inventory-app-windows
         path: dist/app.exe
         retention-days: 30
+
+    - name: Test EXE runs without immediate crash
+      run: |
+        start /wait dist\app.exe
+        echo If you see this, the EXE didn't crash instantly.
+      shell: cmd
+      timeout-minutes: 1
