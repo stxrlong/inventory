@@ -27,6 +27,7 @@ jobs:
         pip install pyinstaller
 
     - name: Build executable with PyInstaller
+      shell: cmd  # 👈 关键：使用 CMD 解释器
       run: |
         pyinstaller --onefile ^
           --console ^
