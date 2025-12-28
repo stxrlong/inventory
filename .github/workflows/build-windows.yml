@@ -33,12 +33,7 @@ jobs:
           --console ^
           --add-data "templates;templates" ^
           --add-data "static;static" ^
-          --hidden-import=flask ^
-          --hidden-import=jinja2 ^
-          --hidden-import=werkzeug ^
-          --hidden-import=markupsafe ^
-          --hidden-import=click ^
-          --hidden-import=itsdangerous ^
+          --collect-all flask ^
           app.py
 
     - name: Upload EXE as artifact
