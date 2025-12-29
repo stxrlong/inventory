@@ -34,7 +34,7 @@ jobs:
         python -c "import PyInstaller; print('PyInstaller module OK')"
 
         echo Building EXE...
-        python -c "from PyInstaller.__main__ import run; run(['--clean', '--onefile', '--windowed', '--name', 'MyApp', '--collect-all', 'flask', '--collect-all', 'jinja2', '--collect-all', 'werkzeug', '--collect-all', 'markupsafe', '--collect-all', 'itsdangerous', '--collect-all', 'click', 'app.py'])"
+        python -c "from PyInstaller.__main__ import run; run(['--clean', '--onefile', '--windowed', '--name', 'MyApp', '--collect-all', 'flask', '--collect-all', 'jinja2', '--collect-all', 'werkzeug', '--collect-all', 'markupsafe', '--collect-all', 'itsdangerous', '--collect-all', 'click', '--add-data', 'templates;templates', '--add-data', 'static;static', 'app.py'])"
 
     - name: Test EXE startup in CI (critical!)
       shell: cmd
