@@ -41,6 +41,7 @@ jobs:
         python -c "import importlib.metadata; print('Flask version:', importlib.metadata.version('flask'))"
 
     - name: Build executable with PyInstaller
+      shell: cmd
       run: |
         python -m pyinstaller --clean ^
           --onefile ^
@@ -55,6 +56,7 @@ jobs:
           app.py
 
     - name: Test EXE startup in CI (critical!)
+      shell: cmd
       run: |
         cd dist
         echo Starting MyApp.exe...
