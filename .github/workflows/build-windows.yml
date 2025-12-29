@@ -50,7 +50,7 @@ jobs:
         if %ERRORLEVEL% NEQ 0 exit /b 1
         taskkill /IM MyApp.exe /F
 
-    - name: Debug: Show collected modules
+    - name: Debug Show collected modules
       run: |
         python -m PyInstaller.utils.cliutils.archive_viewer dist/MyApp.exe
 
