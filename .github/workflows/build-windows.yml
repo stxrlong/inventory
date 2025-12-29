@@ -20,21 +20,23 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install runtime dependencies
+    - name: Build executable with PyInstaller
+      shell: cmd
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         python -m pip install pyinstaller pyinstaller-hooks-contrib
 
-    - name: Verify Flask is installed
-      run: |
+        echo Verifying Flask...
         python -c "import flask; print('Flask import successful')"
-        python -c "import importlib.metadata; print('Flask version:', importlib.metadata.version('flask'))"
+
+        echo Verifying PyInstaller...
+        python -c "import PyInstaller; print('PyInstaller module OK')"
+
+        echo Running PyInstaller via -m...
         python -m pyinstaller --version
 
-    - name: Build executable with PyInstaller
-      shell: cmd
-      run: |
+        echo Building EXE...
         python -m pyinstaller --clean ^
           --onefile ^
           --windowed ^
