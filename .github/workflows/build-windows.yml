@@ -20,7 +20,7 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Debug: Show directory contents
+    - name: Debug Show directory contents
       run: dir
 
     - name: Verify requirements.txt exists
