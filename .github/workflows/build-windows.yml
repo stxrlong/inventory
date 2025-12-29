@@ -1,33 +1,45 @@
 name: Build Flask App for Windows
 
 on:
+  # 允许手动触发
   workflow_dispatch:
-  push:
-    branches: [ main ]
+  # 可选：push 到 main 时自动构建
+  # push:
+  #   branches: [ main ]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Debug: Show directory contents
+      run: dir
+
+    - name: Verify requirements.txt exists
+      run: type requirements.txt
+
+    - name: Install runtime dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+        python -m pip install -r requirements.txt
+
+    - name: Install build tools
+      run: |
+        python -m pip install pyinstaller pyinstaller-hooks-contrib
 
     - name: Verify Flask is installed
       run: |
-        python -c "import flask; print('Flask', flask.__version__)"
+        python -c "import flask; print('✅ Flask version:', flask.__version__)"
 
-    - name: Build EXE with full collection
+    - name: Build executable with PyInstaller
       run: |
         python -m pyinstaller --clean ^
           --onefile ^
@@ -41,21 +53,24 @@ jobs:
           --collect-all click ^
           app.py
 
-    - name: Test EXE startup
+    - name: Test EXE startup in CI (critical!)
       run: |
         cd dist
+        echo Starting MyApp.exe...
         start /B MyApp.exe
-        timeout /T 4 /NOBREAK >nul
+        timeout /T 5 /NOBREAK >nul
         tasklist | findstr /C:"MyApp.exe"
-        if %ERRORLEVEL% NEQ 0 exit /b 1
-        taskkill /IM MyApp.exe /F
+        if %ERRORLEVEL% EQU 0 (
+          echo ✅ EXE started successfully.
+          taskkill /IM MyApp.exe /F >nul 2>&1
+        ) else (
+          echo ❌ EXE failed to start! Likely missing module.
+          exit /b 1
+        )
 
-    - name: Debug Show collected modules
-      run: |
-        python -m PyInstaller.utils.cliutils.archive_viewer dist/MyApp.exe
-
-    - name: Upload EXE
+    - name: Upload Windows executable
       uses: actions/upload-artifact@v4
       with:
         name: MyApp-Windows
         path: dist/MyApp.exe
+        retention-days: 30
