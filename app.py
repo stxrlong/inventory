@@ -1,8 +1,9 @@
 # app.py
 import os
 import sys
-import webbrowser
 import threading
+import time
+import subprocess
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 from datetime import date
@@ -16,6 +17,39 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
+# =========== 启动前：清理同名旧进程 ===========
+def kill_old_instances():
+    """结束占用 5000 端口的旧进程（安全，不会自杀）"""
+    if sys.platform != "win32":
+        return
+
+    try:
+        # 查找占用 5000 端口的进程 PID
+        result = subprocess.run(
+            ["netstat", "-ano", "|", "findstr", ":5000.*LISTENING"],
+            shell=True,
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+
+        # 解析 PID（netstat 输出示例: TCP 127.0.0.1:5000 ... 12345）
+        lines = result.stdout.strip().splitlines()
+        for line in lines:
+            parts = line.split()
+            if len(parts) >= 5:
+                pid = parts[4]
+                # 结束该进程
+                subprocess.run(
+                    ["taskkill", "/F", "/PID", pid],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+        time.sleep(1)  # 等待端口释放
+    except Exception:
+        pass  # 忽略错误
 
 # =============== Flask App 配置 ===============
 app = Flask(__name__,
@@ -266,11 +300,18 @@ def summary():
     )
 
 # ================ 自动打开浏览器 ================
-def open_browser():
-    webbrowser.open("http://127.0.0.1:5000")
-
 if __name__ == '__main__':
-    # 自动打开浏览器（仅在非调试模式）
+    # 1: 清理旧进程
+    kill_old_instances()
+
+    # 2: 自动打开浏览器（你原来的逻辑）
+    def open_browser():
+        time.sleep(1.5)
+        import webbrowser
+        webbrowser.open(f"http://127.0.0.1:5000/summary")
+
     if not app.debug:
-        threading.Timer(1.5, open_browser).start()
-    app.run(debug=False, host='127.0.0.1', port=5000)
+        threading.Thread(target=open_browser, daemon=True).start()
+
+    # 3. 启动 Flask（确保关闭 reloader）
+    app.run(debug=False, host='127.0.0.1', port=5000, use_reloader=False)
