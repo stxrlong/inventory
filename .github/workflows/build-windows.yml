@@ -20,12 +20,6 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Debug Show directory contents
-      run: dir
-
-    - name: Verify requirements.txt exists
-      run: type requirements.txt
-
     - name: Install runtime dependencies
       run: |
         python -m pip install --upgrade pip
@@ -39,6 +33,7 @@ jobs:
       run: |
         python -c "import flask; print('Flask import successful')"
         python -c "import importlib.metadata; print('Flask version:', importlib.metadata.version('flask'))"
+        python -m pyinstaller --version
 
     - name: Build executable with PyInstaller
       shell: cmd
