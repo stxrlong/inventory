@@ -1,21 +1,18 @@
-name: Build Windows EXE
+name: Build Flask App for Windows
 
 on:
-  # 手动触发（推荐）
   workflow_dispatch:
-  # 或 push 到 main 时自动构建
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: windows-latest  # 使用 Windows 虚拟机
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
@@ -26,26 +23,39 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Build executable with PyInstaller
-      shell: cmd  # 👈 关键：使用 CMD 解释器
+    - name: Verify Flask is installed
       run: |
-        pyinstaller --onefile ^
-          --console ^
-          --add-data "templates;templates" ^
-          --add-data "static;static" ^
+        python -c "import flask; print('Flask', flask.__version__)"
+
+    - name: Build EXE with full collection
+      run: |
+        python -m pyinstaller --clean ^
+          --onefile ^
+          --windowed ^
+          --name MyApp ^
           --collect-all flask ^
+          --collect-all jinja2 ^
+          --collect-all werkzeug ^
+          --collect-all markupsafe ^
+          --collect-all itsdangerous ^
+          --collect-all click ^
           app.py
 
-    - name: Upload EXE as artifact
+    - name: Test EXE startup
+      run: |
+        cd dist
+        start /B MyApp.exe
+        timeout /T 4 /NOBREAK >nul
+        tasklist | findstr /C:"MyApp.exe"
+        if %ERRORLEVEL% NEQ 0 exit /b 1
+        taskkill /IM MyApp.exe /F
+
+    - name: Debug: Show collected modules
+      run: |
+        python -m PyInstaller.utils.cliutils.archive_viewer dist/MyApp.exe
+
+    - name: Upload EXE
       uses: actions/upload-artifact@v4
       with:
-        name: inventory-app-windows
-        path: dist/app.exe
-        retention-days: 30
-
-    - name: Test EXE runs without immediate crash
-      run: |
-        start /wait dist\app.exe
-        echo If you see this, the EXE didn't crash instantly.
-      shell: cmd
-      timeout-minutes: 1
+        name: MyApp-Windows
+        path: dist/MyApp.exe
